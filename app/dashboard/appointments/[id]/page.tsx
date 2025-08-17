@@ -101,16 +101,36 @@ export default function AppointmentDetailPage({ params }: { params: Promise<{ id
     }
   }
 
-  const updateAppointmentStatus = async (status: "completed" | "postponed") => {
+  const updateAppointmentStatusPostponed = async (status: "postponed") => {
     if (!appointment) return
 
     if (status === "postponed") {
+      try {
+        const response = await fetch(`/api/appointments/${appointment.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status }),
+        })
 
-      toast({
-        title: "Cita pospuesta",
-        description: "La cita ha sido marcada como pospuesta",
-      })
-      setAppointment({ ...appointment, status })
+        if (response.ok) {
+          toast({
+            title: "Cita pospuesta",
+            description: "La cita ha sido marcada como pospuesta",
+          })
+          setAppointment({ ...appointment, status })
+        }
+      } catch (error: any) {
+        toast({
+            title: "La cita no pudo ser marcada como pospuesta",
+            description: "Ocurrio un error al momento de marcar la cita como pospuesta",
+            variant: "destructive"
+          })
+      }
+
+
+
+
+
     }
   }
 
@@ -139,6 +159,9 @@ export default function AppointmentDetailPage({ params }: { params: Promise<{ id
       })
     }
   }
+
+
+  
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -196,7 +219,7 @@ export default function AppointmentDetailPage({ params }: { params: Promise<{ id
           <div className="flex space-x-2 lg:flex-nowrap flex-wrap lg:mt-0 mt-4 lg:gap-0 gap-2">
             {appointment.status === "scheduled" && (
               <>
-                <Button variant="outline" onClick={() => updateAppointmentStatus("postponed")}>
+                <Button variant="outline" onClick={() => updateAppointmentStatusPostponed("postponed")}>
                   <XCircle className="mr-2 h-4 w-4" />
                   Posponer
                 </Button>

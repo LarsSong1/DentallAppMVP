@@ -8,6 +8,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   try {
     const { status } = await request.json()
+    console.log(status)
     const { id: appointmentId } = await params
 
     const updated = await Appointment.findOneAndUpdate(

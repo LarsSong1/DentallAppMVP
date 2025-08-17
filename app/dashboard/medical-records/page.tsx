@@ -8,9 +8,11 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, FileText, Eye } from "lucide-react"
+import { Search, FileText, Eye, Trash } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import medicalRecords from "@/models/medical-records"
+import { useToast } from "@/hooks/use-toast"
 
 interface MedicalRecord {
   id: string
@@ -25,12 +27,27 @@ interface MedicalRecord {
   createdAt: string
 }
 
+
+interface Appointment {
+  id: string
+  patientId: string
+  patientName: string
+  duration: string
+  date: string
+  time: string
+  reason: string
+  status: "scheduled" | "completed" | "postponed" | "cancelled"
+  createdAt: string
+}
+
 export default function MedicalRecordsPage() {
   const { doctor, isLoading } = useAuth()
   const router = useRouter()
+  const { toast } = useToast()
   const [records, setRecords] = useState<MedicalRecord[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [loading, setLoading] = useState(true)
+  const [appointments, setAppointments] = useState<Appointment[]>([])
 
   useEffect(() => {
     if (!isLoading && !doctor) {
@@ -40,8 +57,10 @@ export default function MedicalRecordsPage() {
 
     if (doctor) {
       fetchRecords()
+     
     }
   }, [doctor, isLoading, router])
+
 
   const fetchRecords = async () => {
     if (!doctor) {
@@ -81,6 +100,38 @@ export default function MedicalRecordsPage() {
     }
   }
 
+  // falta poner para que si se borra el registro medico se actualize el estado de la cita
+  const deleteMedicalRecord = async (id: string, appointmentId: string) => {
+    try {
+      const response = await fetch(`/api/medical-records/${id}`, {
+        method: 'DELETE'
+      })
+      if (response.ok) {
+        await fetch(`/api/appointments/${appointmentId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "scheduled" }), // estado pendiente
+        })
+        toast({
+          title: "Registro Médico Eliminado",
+          description: "El registro médico se eliminó con exito"
+        })
+        fetchRecords()
+      }
+    } catch (error) {
+
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar el registro médico",
+        variant: "destructive",
+      })
+    }
+  }
+
+
+
+
+
   const filteredRecords = records.filter(
     (record) =>
       record.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -96,85 +147,92 @@ export default function MedicalRecordsPage() {
   }
 
   return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Registros Médicos</h1>
-            <p className="text-muted-foreground">Historial completo de tratamientos realizados</p>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <div className="relative max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Buscar registros..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-
-          {filteredRecords.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-12">
-                <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No hay registros médicos</h3>
-                <p className="text-gray-600">Los registros aparecerán aquí cuando completes las citas</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="rounded-md border overflow-x-auto">
-              <Table className="min-w-[700px]">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Paciente</TableHead>
-                    <TableHead>Fecha</TableHead>
-                    <TableHead>Tratamiento</TableHead>
-                    <TableHead>Piezas Tratadas</TableHead>
-                    <TableHead>Costo</TableHead>
-                    <TableHead>Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredRecords.map((record) => (
-                    <TableRow key={record.id}>
-                      <TableCell className="font-medium">{record.patientName}</TableCell>
-                      <TableCell>
-                        {new Date(`${record.date}T12:00:00`).toLocaleDateString("es-EC", {
-                          timeZone: "America/Guayaquil",
-                        })}
-                      </TableCell>
-                      <TableCell>{record.description.substring(0, 50)}...</TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {record.teethTreated.slice(0, 3).map((tooth) => (
-                            <Badge key={tooth} variant="secondary" className="text-xs">
-                              {tooth}
-                            </Badge>
-                          ))}
-                          {record.teethTreated.length > 3 && (
-                            <Badge variant="secondary" className="text-xs">
-                              +{record.teethTreated.length - 3}
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>${record.cost || 0}</TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/dashboard/patients/${record.patientId}/medical-history`}>
-                            <Eye className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Registros Médicos</h1>
+          <p className="text-muted-foreground">Historial completo de tratamientos realizados</p>
         </div>
       </div>
+
+      <div className="space-y-4">
+        <div className="relative max-w-sm">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            placeholder="Buscar registros..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
+        {filteredRecords.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-12">
+              <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No hay registros médicos</h3>
+              <p className="text-gray-600">Los registros aparecerán aquí cuando completes las citas</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="rounded-md border overflow-x-auto">
+            <Table className="min-w-[700px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Paciente</TableHead>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead>Tratamiento</TableHead>
+                  <TableHead>Piezas Tratadas</TableHead>
+                  <TableHead>Costo</TableHead>
+                  <TableHead>Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredRecords.map((record) => (
+                  <TableRow key={record.id}>
+                    <TableCell className="font-medium">{record.patientName}</TableCell>
+                    <TableCell>
+                      {new Date(`${record.date}T12:00:00`).toLocaleDateString("es-EC", {
+                        timeZone: "America/Guayaquil",
+                      })}
+                    </TableCell>
+                    <TableCell>{record.description.substring(0, 50)}...</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {record.teethTreated.slice(0, 3).map((tooth) => (
+                          <Badge key={tooth} variant="secondary" className="text-xs">
+                            {tooth}
+                          </Badge>
+                        ))}
+                        {record.teethTreated.length > 3 && (
+                          <Badge variant="secondary" className="text-xs">
+                            +{record.teethTreated.length - 3}
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>${record.cost || 0}</TableCell>
+                    <TableCell className="flex items-center gap-2">
+                      <Button className="bg-green-400 hover:bg-green-500" size="sm" asChild>
+                        <Link href={`/dashboard/patients/${record.patientId}/medical-history`}>
+                          <Eye className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                      <Button className="bg-red-700 hover:bg-red-800" size="sm" onClick={() => deleteMedicalRecord(record.id, record.appointmentId)}>
+
+                        <Trash className="h-4 w-4 text-black" />
+
+                      </Button>
+
+                    </TableCell>
+
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </div>
+    </div>
   )
 }

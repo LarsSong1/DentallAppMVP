@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import { useAuth } from "@/components/auth-provider"
 import { useRouter } from "next/navigation"
-import { LayoutWrapper } from "@/components/layout-wrapper"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -29,6 +28,7 @@ interface Appointment {
   id: string
   patientId: string
   patientName: string
+  duration: string
   date: string
   time: string
   reason: string
@@ -146,9 +146,9 @@ export default function AppointmentsPage() {
       case "scheduled":
         return <Badge variant="secondary">Pendiente</Badge>
       case "completed":
-        return <Badge className="bg-green-100 text-green-800">Confirmada</Badge>
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-700 hover:text-white">Confirmada</Badge>
       case "postponed":
-        return <Badge variant="outline">Pospuesta</Badge>
+        return <Badge variant="outline" className="bg-yellow-300">Pospuesta</Badge>
       case "cancelled":
         return <Badge variant="destructive">Cancelada</Badge>
       default:
@@ -156,18 +156,6 @@ export default function AppointmentsPage() {
     }
   }
 
-  const getDuration = (reason: string) => {
-    // Simulate duration based on treatment type
-    const durations: { [key: string]: string } = {
-      "Limpieza dental": "30 min",
-      Endodoncia: "90 min",
-      Ortodoncia: "45 min",
-      Extracción: "60 min",
-      Consulta: "30 min",
-      Obturación: "45 min",
-    }
-    return durations[reason] || "30 min"
-  }
 
 
   console.log("Appointments:", appointments)
@@ -176,6 +164,8 @@ export default function AppointmentsPage() {
     (appointment.patientName?.toLowerCase?.() || "").includes(searchTerm.toLowerCase()) ||
     (appointment.reason?.toLowerCase?.() || "").includes(searchTerm.toLowerCase())
 )
+
+  console.log(filteredAppointments, "filtered")
 
 
 
@@ -298,7 +288,7 @@ export default function AppointmentsPage() {
                       <TableCell>{dayjs(appointment.date).format("DD/MM/YYYY")}</TableCell>
                       <TableCell>{appointment.time}</TableCell>
                       <TableCell>{appointment.reason}</TableCell>
-                      <TableCell>{getDuration(appointment.reason)}</TableCell>
+                      <TableCell>{appointment.duration} min</TableCell>
                       <TableCell>{getStatusBadge(appointment.status)}</TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
@@ -307,8 +297,8 @@ export default function AppointmentsPage() {
                           </Button>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
-                                <Trash2 className="h-4 w-4" />
+                              <Button variant="ghost" size="sm" className="bg-red-700">
+                                <Trash2 className="h-4 w-4 text-black" />
                               </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
