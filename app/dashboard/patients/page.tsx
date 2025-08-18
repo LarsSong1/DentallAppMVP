@@ -113,6 +113,9 @@ export default function PatientsPage() {
         const response = await fetch(`/api/appointments/${patient.id}`)
         if (response.ok) {
           const appointment = await response.json()
+
+        
+
           visits[patient.id] = new Date(`${appointment.date}T12:00:00`).toLocaleDateString("es-EC", {
             timeZone: "America/Guayaquil",
           })
@@ -157,112 +160,114 @@ export default function PatientsPage() {
   }
 
   return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Pacientes</h1>
-            <p className="text-muted-foreground">Gestiona la información de tus pacientes</p>
-          </div>
-          <Button asChild>
-            <Link href="/dashboard/patients/new" className="text-white">
-              <Plus className="mr-2 h-4 w-4" />
-              Nuevo Paciente
-            </Link>
-          </Button>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Pacientes</h1>
+          <p className="text-muted-foreground">Gestiona la información de tus pacientes</p>
+        </div>
+        <Button asChild>
+          <Link href="/dashboard/patients/new" className="text-white">
+            <Plus className="mr-2 h-4 w-4" />
+            Nuevo Paciente
+          </Link>
+        </Button>
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold">Lista de Pacientes</h2>
+        </div>
+        <p className="text-sm text-muted-foreground">Todos los pacientes registrados en el sistema</p>
+
+        <div className="relative max-w-sm">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            placeholder="Buscar pacientes..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
         </div>
 
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">Lista de Pacientes</h2>
-          </div>
-          <p className="text-sm text-muted-foreground">Todos los pacientes registrados en el sistema</p>
+        <div className="rounded-md border overflow-x-auto">
+          <Table className="w-full min-w-[700px]">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nombre</TableHead>
+                {/* <TableHead>Email</TableHead> */}
+                <TableHead>Teléfono</TableHead>
+                <TableHead>Edad</TableHead>
+                <TableHead>Última Visita</TableHead>
+                <TableHead>Visitas</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead>Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="">
+              {filteredPatients.map((patient) => (
+                <TableRow key={patient.id}>
+                  <TableCell className="font-medium">{patient.name}</TableCell>
+                  {/* <TableCell>{patient.email}</TableCell> */}
+                  <TableCell>{patient.phone}</TableCell>
+                  <TableCell>{calculateAge(patient.birthDate)}</TableCell>
+                  <TableCell>{lastVisits[patient.id]}</TableCell>
+                  <TableCell>{patient.totalAppointments}</TableCell>
+               
+                
+                  <TableCell>
+                    <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Activo</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex space-x-2">
+                      <Button className="bg-green-300 hover:bg-green-500" variant="ghost" size="sm" asChild>
+                        <Link href={`/dashboard/patients/${patient.id}`}>
+                          <Eye className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                      <Button className="bg-green-300 hover:bg-green-500" size="sm" asChild>
+                        <Link href={`/dashboard/appointments/new?patientId=${patient.id}`}>
+                          <Calendar className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                      <Button className="bg-green-300 hover:bg-green-500" size="sm" asChild>
+                        <Link href={`/dashboard/patients/${patient.id}/edit`}>
+                          <Pencil className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="destructive">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>¿Eliminar paciente?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Esta acción no se puede deshacer. El paciente y su historial serán eliminados permanentemente.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              className="bg-red-600 hover:bg-red-700"
+                              onClick={() => deletePatient(patient.id)}
+                            >
+                              Eliminar
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
 
-          <div className="relative max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Buscar pacientes..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-
-          <div className="rounded-md border overflow-x-auto">
-            <Table className="w-full min-w-[700px]">
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nombre</TableHead>
-                  {/* <TableHead>Email</TableHead> */}
-                  <TableHead>Teléfono</TableHead>
-                  <TableHead>Edad</TableHead>
-                  <TableHead>Última Visita</TableHead>
-                  <TableHead>Visitas</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Acciones</TableHead>
+                    </div>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody className="">
-                {filteredPatients.map((patient) => (
-                  <TableRow key={patient.id}>
-                    <TableCell className="font-medium">{patient.name}</TableCell>
-                    {/* <TableCell>{patient.email}</TableCell> */}
-                    <TableCell>{patient.phone}</TableCell>
-                    <TableCell>{calculateAge(patient.birthDate)}</TableCell>
-                    <TableCell>{lastVisits[patient.id]}</TableCell>
-                    <TableCell>{patient.totalAppointments}</TableCell>
-                    <TableCell>
-                      <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Activo</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button className="bg-green-300 hover:bg-green-500" variant="ghost" size="sm" asChild>
-                          <Link href={`/dashboard/patients/${patient.id}`}>
-                            <Eye className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <Button className="bg-green-300 hover:bg-green-500" size="sm" asChild>
-                          <Link href={`/dashboard/appointments/new?patientId=${patient.id}`}>
-                            <Calendar className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <Button className="bg-green-300 hover:bg-green-500" size="sm" asChild>
-                          <Link href={`/dashboard/patients/${patient.id}/edit`}>
-                            <Pencil className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button size="sm" variant="destructive">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>¿Eliminar paciente?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Esta acción no se puede deshacer. El paciente y su historial serán eliminados permanentemente.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction
-                                className="bg-red-600 hover:bg-red-700"
-                                onClick={() => deletePatient(patient.id)}
-                              >
-                                Eliminar
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       </div>
+    </div>
   )
 }

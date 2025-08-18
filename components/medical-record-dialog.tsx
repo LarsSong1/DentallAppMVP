@@ -113,10 +113,7 @@ export function MedicalRecordDialog({ open, onOpenChange, appointment, onSave, a
         <DialogHeader>
           <DialogTitle>Registro de Atención - {appointment.patientName}</DialogTitle>
           <DialogDescription>
-            Cita del {new Date(appointment.date).toLocaleDateString("en-CA", {
-              timeZone: "America/Guayaquil",
-              hour12: false,
-            })} a las {appointment.time}
+            Cita del {appointment.date} a las {appointment.time}
           </DialogDescription>
         </DialogHeader>
 

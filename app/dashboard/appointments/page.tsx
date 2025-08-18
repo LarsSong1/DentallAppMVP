@@ -292,12 +292,12 @@ export default function AppointmentsPage() {
                       <TableCell>{getStatusBadge(appointment.status)}</TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
-                          <Button variant="ghost" size="sm" asChild>
+                          <Button className="text-xs bg-green-300 hover:bg-green-400"  size="sm" asChild>
                             <Link href={`/dashboard/appointments/${appointment.id}`}>Ver Detalles</Link>
                           </Button>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="sm" className="bg-red-700">
+                              <Button variant="ghost" size="sm" className="bg-red-500 hover:bg-red-700">
                                 <Trash2 className="h-4 w-4 text-black" />
                               </Button>
                             </AlertDialogTrigger>
